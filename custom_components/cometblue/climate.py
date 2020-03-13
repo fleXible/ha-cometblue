@@ -23,6 +23,10 @@ from bluepy.btle import BTLEException
 
 from homeassistant.components.climate import ClimateEntity, PLATFORM_SCHEMA
 from homeassistant.components.climate.const import (
+    ATTR_HVAC_MODE,
+    CURRENT_HVAC_OFF,
+    CURRENT_HVAC_HEAT,
+    CURRENT_HVAC_IDLE,
     HVAC_MODE_HEAT,
     HVAC_MODE_AUTO,
     SUPPORT_TARGET_TEMPERATURE,
@@ -140,6 +144,22 @@ class CometBlueThermostat(ClimateEntity):
     def max_temp(self):
         """Return the maximum temperature."""
         return 28.0
+
+    @property
+    def hvac_action(self):
+        if not self._thermostat.available:
+            return None
+
+        if self.hvac_mode == HVAC_MODE_OFF:
+            return CURRENT_HVAC_OFF
+        elif self.target_temperature > self.max_temp:
+            return CURRENT_HVAC_HEAT
+        elif self.target_temperature < self.min_temp:
+            return CURRENT_HVAC_OFF
+        elif self.target_temperature + 1.0 >= self.current_temperature:
+            return CURRENT_HVAC_HEAT
+        else:
+            return CURRENT_HVAC_IDLE
 
     @property
     def hvac_mode(self):
